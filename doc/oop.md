@@ -56,7 +56,19 @@ print $req->remote_host();
 
 $req は Plack::Request のインスタンスとして振る舞いますが、実際は new サブルーチンの結果として返る bless されたハッシュリファレンスです。new を使うのは慣例であり、Perl のシンタクスではありません。
 
-ここでは、`{PackageName}->(sub}()` (`{sub} {PackageName}()` とも書けます) という呼び出しをするとパッケージ名が暗黙の第一引数としてわたされる、というのが Perl のシンタクスとしての機能です (PackageName::sub でも静的なサブルーチンとしての呼び出しは可能です。ただし、この場合は後述の継承木 (@ISA) はたどらず、静的なパッケージ関数の呼出しとして解釈され sub の引数もパッケージ名はわたされません)。
+ここでは、`{PackageName}->(sub}()` (`{sub} {PackageName}()` とも書けます) という呼び出しをするとパッケージ名が暗黙の第一引数としてわたされる、というのが Perl のシンタクスとしての機能です (PackageName::sub でも静的なサブルーチンとしての呼び出しは可能です。ただし、この場合は継承木はたどらず、静的なパッケージ関数の呼出しとして解釈され sub の引数もパッケージ名はわたされません)。
+
+コンストラクタの中でインスタンス自身を操作したいときは、このようにも書けます。便宜上コンストラクタと呼びましたが、実際はたんなる Factory Method なので、最後に bless されたハッシュリファレンスを return してやればいいだけです。
+
+```perl
+sub new {
+    my $class = shift;
+    my $self = {};
+    bless $self, $class;
+    # do something
+    return $self;
+}
+```
 
 ## インスタンスメソッド
 
@@ -155,6 +167,44 @@ OOP 以前に Perl としても[諸説](http://d.hatena.ne.jp/fbis/20090612/1244
 constant プラグマでもいいのではないですかねと思う PHP の constant で苦労した人なのでした。
 
 ## 継承
+
+`use parent` を使います。
+
+[Amon2::Web::Request](https://github.com/tokuhirom/Amon/blob/master/lib/Amon2/Web/Request.pm) での例。
+
+```perl
+package Amon2::Web::Request;
+use strict;
+use warnings;
+use parent qw/Plack::Request/;
+```
+
+親クラスのメソッドを呼び出すときは `SUPER::` 経由で呼び出します。
+
+クラスメソッドの場合。
+
+```perl
+sub new {
+    my ($class, $env, $context_class) = @_;
+    my $self = $class->SUPER::new($env);
+    if (@_==3) {
+        $self->{_web_pkg} = $context_class;
+    }
+    return $self;
+}
+```
+
+インスタンスメソッドの場合。
+
+```perl
+sub body_parameters {
+    my ($self) = @_;
+    $self->{'amon2.body_parameters'} ||= $self->_decode_parameters($self->SUPER::body_parameters());
+}
+
+```
+
+use base というプラグマもありましたが、["Don't use base.pm, use parent.pm instead!"](http://d.hatena.ne.jp/gfx/20101226/1293342019) とのことなので parent を使いましょう。
 
 ## DSL を export
 
