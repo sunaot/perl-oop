@@ -168,7 +168,7 @@ constant プラグマでもいいのではないですかねと思う PHP の co
 
 ## 継承
 
-`use parent` を使います。
+`use parent` を使います。Perl の継承は多重継承です。
 
 [Amon2::Web::Request](https://github.com/tokuhirom/Amon/blob/master/lib/Amon2/Web/Request.pm) での例。
 
