@@ -271,6 +271,35 @@ sub builder(&) {
 
     $self->to_app($app);
 }
+
+~
+
+=head1 SYNOPSIS
+
+  # in .psgi
+  use Plack::Builder;
+
+  my $app = sub { ... };
+
+  builder {
+      enable "Deflater";
+      enable "Session", store => "File";
+      enable "Debug", panels => [ qw(DBITrace Memory Timer) ];
+      enable "+My::Plack::Middleware";
+      $app;
+  };
+
+  # use URLMap
+
+  builder {
+      mount "/foo" => builder {
+          enable "Foo";
+          $app;
+      };
+
+      mount "/bar" => $app2;
+      mount "http://example.com/" => builder { $app3 };
+  };
 ```
 
 ## 他言語プログラマのための my, our, local の解説
